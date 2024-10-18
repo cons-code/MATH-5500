@@ -1,0 +1,55 @@
+\documentclass[10pt]{article}
+\usepackage{sdss2020} % Uses Times Roman font (either newtx or times package)
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{amsmath, amsthm, amsfonts}
+\usepackage{algorithm, algorithmic}  
+\usepackage{multirow,graphicx}
+
+\title{Modeling Opening Weekend Revenue for U.S. Box Office Movies, 2005-2007}
+
+\author{
+  C. Logue \\
+  Georgetown University \\
+  Washington, DC \\
+\\\And
+  P. Mernagh \\
+  Georgetown University \\
+  Washington, DC \\
+\\\And
+  Z. Holden \\
+  Georgetown University \\
+  Washington, DC \\
+\\}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\section{Data}
+
+Data on approximately 500 movies that opened in U.S. theaters between 2005-2007 was aggregated from The Movie Database (TMDB). Available data points included the release date; a selection of genres that the movie could be classified as (e.g. Drama, Thriller, Action, Crime, Documentary, etc.); popularity, which is a proprietary TMDB metric based on various data points including votes, views, release date, etc.; vote average, the mean of user-submitted votes (on the scale of 0-10); vote count; budget; origin country or countries; production companies; production country or countries, runtime (in minutes); and what collection the movie belongs to, if any (e.g. the Harry Potter series). The dataset was augmented with opening weekend data from Box Office Mojo, a service of IMDB Pro, specifically opening revenue, opening revenue as a percent of total revenue, and the number of theaters the movie opened in. 
+
+The dataset is restricted to 2005-2007 to avoid adjusting for inflation. The time period is also chosen to predate the widespread adoption of streaming and its potential impacts on box office sales. 
+
+
+\section{Methods}
+
+The list of possible predictors was narrowed to budget, number of production companies, runtime, opening weekend season, and whether the movie is part of a collection. 
+The seasons are assigned based on the movie opening date falling into the following periods: Winter (January-February), Spring (March-April), Summer (May-August), Fall (September-October), and Holiday (November-December). 
+
+
+\section{Results}
+
+\section{Discussion}
+
+\bibliographystyle{sdss2020} % Please do not change the bibliography style
+%\bibliography{fullbib}
+
+\appendix
+
+\section{Replication Data and Code}
+\label{a:code}
+Data and code are available at https://github.com/cons-code/MATH-5500
+\end{document}
