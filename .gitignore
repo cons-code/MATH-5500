@@ -1,5 +1,6 @@
 # Latex
 *.gz
+*.aux
 
 # Data
 *.csv
