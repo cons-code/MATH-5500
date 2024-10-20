@@ -1,0 +1,84 @@
+\documentclass[10pt]{article}
+\usepackage{sdss2020} % Uses Times Roman font (either newtx or times package)
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{amsmath, amsthm, amsfonts}
+\usepackage{algorithm, algorithmic}  
+\usepackage{multirow,graphicx}
+
+\title{Modeling Opening Weekend Revenue for U.S. Box Office Movies, 2005-2007}
+
+\author{
+  C. Logue \\
+  Georgetown University \\
+  Washington, DC \\
+\\\And
+  P. Mernagh \\
+  Georgetown University \\
+  Washington, DC \\
+\\\And
+  Z. Holden \\
+  Georgetown University \\
+  Washington, DC \\
+\\}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+The project objective is to predict as accurately as possible opening weekend box office revenue for a set of movies, specifically from 2005-2007. Motivation for this project is a wealth of data points from both The Movie Database (TMDB) and Internet Movie Database (IMDb) around historical movies and TV shows: user-submitted ratings, applicable genres, budget, release date, actors, producer(s), production companies, country (or countries) of origin, etc. Further motivation is a prior understanding of likely useful predictors, such as the movie's budget, or the seasonal factors affecting a movie release. For example, the periods January-February, and to a lesser extent August-September, have been referred to as the ``dump months, '' i.e. effectively a dumping ground for low-potential movies that are not expected to make as much money. Various factors such as the seasonality of consumer spending (i.e binge before the holidays, pay down debt later), the timing of Golden Globes and Oscars awards, weather, the Super Bowl, and vacation months may all lead to seasonality in box office receipts.  The years 2005-2007 were specifically chosen since they predate the rise of the streaming era and its potential impacts on box office sales. They are a short enough period that no inflation adjustment is made to any financial variables. 
+\section{Data}
+
+Data on approximately 500 movies that opened in U.S. theaters between 2005-2007 was aggregated from TMDB and IMDb. Only English-language movies are included. Retrieved data points include the release date, the opening weekend revenue, budget, and the number of theaters the movie opened in. A selection of genres that each movie could be classified as (e.g. drama, thriller, action, crime, documentary, etc.) is included. Most movies are tagged with two to three genres, though a handful go as high as six. Popularity, a proprietary TMDB metric, is also included. It itself is based on various data points including votes, views, release date, etc.. As a community-built database, TMDB provides the data point vote average, namely the mean of user-submitted ratings on the scale of 0-10, as well as the number of submitted votes.  Both the origin and production country (or countries) are included. The production companies are provided (e.g big hitters such as Paramount, Warner Bros, MGM). Finally, the runtime, and what collection the movie belongs to, if any, such as the Harry Potter series or the Pirates of the Caribbean collection. The operating revenue and number of opening theaters were specifically pulled from Box Office Mojo, a service of IMDB Pro. The following predictors are chosen for initial modeling:
+\begin{enumerate}
+\item Budget (continuous)
+\item Number of opening theaters (continuous)
+\item Runtime (continuous)
+\item Number of production companies (continuous)
+\item From a series (binary, 118 total)
+\item Opening weekend season (categorical)
+\begin{enumerate}
+\item Winter: January-February (71 total)
+\item Spring: March-April (84 total)
+\item Summer: May-August (154 total)
+\item Fall: September-October (120 total)
+\item Holiday: November-December (82 total)
+\end{enumerate}
+\end{enumerate}
+
+Summary statistics are as follows:
+\begin{table}[H]
+\centering
+\caption{Summary Statistics (n = 511)}
+\begin{tabular}{|lrrr|} 
+\hline
+Variable & Mean & Min & Max \\ 
+\hline
+opening revenue (\$) & 14,743,982 & 9,653 & 151,116,516\\
+\hline
+budget (\$) & 40,365,469 & 0 & 300,000,000\\
+\hline
+\# of theaters & 2,134 & 1 & 4,362\\
+\hline
+runtime (min) & 107 & 14 & 187\\
+\hline
+\# of prod. cos. & 3.8 & 0 & 17\\
+\hline
+\end{tabular}  
+\end{table}
+
+\section{Methods}
+
+\section{Results}
+
+\section{Discussion}
+
+\bibliographystyle{sdss2020} % Please do not change the bibliography style
+%\bibliography{fullbib}
+
+\appendix
+
+\section{Replication Data and Code}
+\label{a:code}
+Data and code are available at https://github.com/cons-code/MATH-5500
+\end{document}
