@@ -3,7 +3,6 @@
 *.aux
 
 # Data
-*.csv
 *.pdf
 
 # Byte-compiled / optimized / DLL files
