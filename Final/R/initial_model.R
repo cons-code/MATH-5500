@@ -1,0 +1,10 @@
+library(car)
+library(dplyr)
+library(GGally)
+library(ggplot2)
+library(ggfortify)
+
+df <- read.csv('../Data/combined.csv')
+model <- lm('Salary ~ GP + PTS + X... + Grit + TOI', data = df)
+summary(model)
+autoplot(model)
