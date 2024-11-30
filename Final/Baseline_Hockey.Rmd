@@ -1,0 +1,59 @@
+---
+title: "R.Final_PenalizedRegression"
+author: "Connor Logue"
+date: "2024-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Data
+```{r}
+data = read.csv("data.csv", header = TRUE)
+data
+```
+
+### EDA  & Cleaning
+```{r}
+paste("Number of Instances:", nrow(data))
+paste("Number of Variables:", ncol(data))
+```
+
+```{r}
+head (data)
+```
+
+### Baseline
+```{r}
+base <- lm(Salary_log ~ FO_pct + G + A + GF + GA + plus_mins + TOI + iSF + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP, data = data)
+```
+
+``` {r}
+summary(base)
+```
+
+```{r}
+vif(base)
+mean(vif(base))
+```
+
+
+```{r}
+RSS <- c(crossprod(base$residuals))
+MSE <- RSS / length(base$residuals)
+MSE
+```
+
+
+```{r}
+base2 <- lm(Salary_log ~ G + A + GF + GA + plus_mins + TOI + iSF + Yrs_in_NHL + GP, data = data)
+summary(base2)
+```
+```{r}
+vif(base2)
+mean(vif(base2))
+```
+
+
