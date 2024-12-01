@@ -1,0 +1,158 @@
+---
+title: "Con"
+author: "Connor Logue"
+date: "2024-12-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Libraries
+```{r}
+library(dplyr)
+library(glmnet)
+library(car)
+```
+
+### Data
+```{r}
+data = read.csv("combined.csv", header = TRUE)
+data
+```
+
+
+
+### Cleansing
+```{r}
+data$Yrs_in_NHL <- 2016 - data$DftYr
+data$A = data$A1 + data$A2
+
+data$GF[is.na(data$GF)] <- median(data$GF, na.rm=TRUE)
+data$GA[is.na(data$GA)] <- median(data$GA, na.rm=TRUE)
+data$iSF[is.na(data$iSF)] <- median(data$iSF, na.rm=TRUE)
+data$Yrs_in_NHL[is.na(data$Yrs_in_NHL)] <- 0
+data$iHA[is.na(data$iHA)] <- median(data$iHA, na.rm=TRUE)
+
+data <- data[data$Yrs_in_NHL > 3,]
+data <- data[data$Is_Offense == 1,]
+
+scale_numeric <- function(x) x %>% mutate_if(is.numeric, function(y) as.vector(scale(y)))
+scaled_data <- data %>% scale_numeric()
+```
+
+
+```{r}
+bedrock <- lm(Salary_log ~ FO_pct + G + A + GF + GA + plus_mins + TOI + iSF + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP, data = scaled_data)
+summary(bedrock)
+
+e     <- resid(bedrock)
+Yhat  <- predict(bedrock)
+s     <- summary(bedrock)$sigma
+es    <- e/s
+```
+
+```{r}
+plot(Yhat, e, type = 'n', main = 'Fitted vs Residual')
+grid()
+abline(h = 0, lwd = 2, col = 'gray')
+points(Yhat, e, pch = 16, col = 'darkblue')
+```
+
+```{r}
+qq_model  <- qqnorm(es, plot.it = FALSE)
+qqplot(qq_model$x, qq_model$y, xlab = 'E(e*)', ylab = 'e*', pch = 16, col = 'darkblue',
+       main = 'Q-Q Plot')
+qqline(qq_model$y, col = 'gray', lwd = 2)
+grid()
+```
+
+
+```{r}
+vif(bedrock)
+mean(vif(bedrock))
+```
+```{r, fig.width=10, fig.height=10}
+pairwise <- subset(scaled_data, select = c(FO_pct, G, A, GF, GA, plus_mins, TOI, iSF, Yrs_in_NHL, Ht, Wt, Grit, iHF, iHA, iBLK, PIM, GP))
+
+library(corrplot)
+M = cor(pairwise)
+corrplot(M, method = 'number')
+```
+
+### Penalized Regression
+``` {r}
+library(glmnet)
+X         <- model.matrix(Salary_log ~ FO_pct + G + A + GF + GA + plus_mins + TOI + iSF + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP -1, data = scaled_data)
+Y         <- scaled_data$Salary_log
+
+ridge_cv   <- cv.glmnet(x = X, y = Y, family = "gaussian", alpha = 0, type.measure = "mse", nfolds = nrow(scaled_data), grouped = FALSE)
+elastic_cv <- cv.glmnet(x = X, y = Y, family = "gaussian", alpha = 0.5, type.measure = "mse", nfolds = nrow(scaled_data), grouped = FALSE)
+lasso_like_cv <- cv.glmnet(x = X, y = Y, family = "gaussian", alpha = 0.9, type.measure = "mse", nfolds = nrow(scaled_data), grouped = FALSE)
+lasso_cv <- cv.glmnet(x = X, y = Y, family = "gaussian", alpha = 1, type.measure = "mse", nfolds = nrow(scaled_data), grouped = FALSE)
+
+results <- matrix(c(ridge_cv$lambda[which.min(ridge_cv$cvm)], min(ridge_cv$cvm),
+              elastic_cv$lambda[which.min(elastic_cv$cvm)],min(elastic_cv$cvm),
+              lasso_like_cv$lambda[which.min(lasso_like_cv$cvm)], min(lasso_like_cv$cvm),
+              lasso_cv$lambda[which.min(lasso_cv$cvm)], min(lasso_cv$cvm)), 
+            nrow = 4, ncol = 2, byrow = TRUE)
+
+rownames(results) = c("Ridge", "Elastic", "Lasso-Like", "Lasso")
+colnames(results) = c("Lambda", "MSE")
+results
+```
+```{r}
+plot(elastic_cv)
+```
+
+```{r}
+coef(elastic_cv)
+```
+
+
+```{r}
+baseline <- lm(Salary_log ~ G + A + GF + plus_mins + TOI + iSF + Yrs_in_NHL + Wt + GP, data = scaled_data)
+summary(baseline)
+
+e     <- resid(baseline)
+Yhat  <- predict(baseline)
+s     <- summary(baseline)$sigma
+es    <- e/s
+```
+
+```{r}
+plot(Yhat, e, type = 'n', main = 'Fitted vs Residual')
+grid()
+abline(h = 0, lwd = 2, col = 'gray')
+points(Yhat, e, pch = 16, col = 'darkblue')
+```
+
+```{r}
+qq_model  <- qqnorm(es, plot.it = FALSE)
+qqplot(qq_model$x, qq_model$y, xlab = 'E(e*)', ylab = 'e*', pch = 16, col = 'darkblue',
+       main = 'Q-Q Plot')
+qqline(qq_model$y, col = 'gray', lwd = 2)
+grid()
+```
+
+
+```{r}
+vif(baseline)
+mean(vif(baseline))
+```
+
+
+```{r}
+library(glmnet)
+X         <- model.matrix(Salary_log ~ G + A + GF + plus_mins + TOI + iSF + Yrs_in_NHL + Wt + GP -1, data = scaled_data)
+Y         <- scaled_data$Salary_log
+
+ridge_cv   <- cv.glmnet(x = X, y = Y, family = "gaussian", alpha = 0, type.measure = "mse", nfolds = nrow(scaled_data), grouped = FALSE)
+
+plot(ridge_cv)
+```
+
+```{r}
+coef(ridge_cv)
+```
