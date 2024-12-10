@@ -27,6 +27,9 @@ raw_data$Yrs_in_NHL[is.na(raw_data$Yrs_in_NHL)] <- 0
 # only retain offense
 data <- raw_data[raw_data$Yrs_in_NHL > 3 & raw_data$Is_Offense == 1, ]
 
+scale_numeric <- function(x) x %>% mutate_if(is.numeric, function(y) as.vector(scale(y)))
+scaled_data <- data %>% scale_numeric()
+
 # supporting visualizations
 # Years in NHL
 hist(raw_data$Yrs_in_NHL,
@@ -75,54 +78,53 @@ sum.stats %>%
 
 # baseline model
 base <- lm(Salary_log ~ FO_pct + G + A + GF + GA + plus_mins + TOI + iSF 
-           + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP, data = data)
+           + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP, data = scaled_data)
 summary(base)
 mean(vif(base)) # 469.5
 autoplot(base)
 
 # baseline2 model
 base2 <- lm(Salary_log ~ G + A + GF + plus_mins + TOI + iSF + 
-              Yrs_in_NHL + Wt + GP, data = data)
+              Yrs_in_NHL + Wt + GP, data = scaled_data)
 summary(base2)
 mean(vif(base2)) # 13.47
 autoplot(base2)
 
+
 # Adding Is_Big_6 does nothing
 base3 <- lm(Salary_log ~ G + A + GF + plus_mins + TOI + iSF + 
-              Yrs_in_NHL + Wt + GP + Is_Big_6, data = data)
+              Yrs_in_NHL + Wt + GP + Is_Big_6, data = scaled_data)
 summary(base3)
+
 
 # Overall Draft position
 base4 <- lm(Salary_log ~ G + A + GF + plus_mins + TOI + iSF + 
-              Yrs_in_NHL + Wt + GP + Ovrl, data = data)
+              Yrs_in_NHL + Wt + GP + Ovrl, data = scaled_data)
 summary(base4)
 mean(vif(base4)) # 12.35
 autoplot(base4)
 
+
 # Draft Year not populated for 125 players
 sum(is.na(raw_data$DftYr))
 
+
 # Model defense?
 def <- raw_data[raw_data$Yrs_in_NHL > 3 & raw_data$Is_Offense == 0, ]
+scale_def <- def |> scale_numeric()
 base_def <- lm(Salary_log ~ FO_pct + G + A + GF + GA + plus_mins + TOI + iSF 
-               + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP, data = def)
+               + Yrs_in_NHL + Ht + Wt + Grit + iHF + iHA + iBLK + PIM + GP, data = scale_def)
 summary(base_def)
 mean(vif(base_def))
 autoplot(base_def)
 
 base_def2 <- lm(Salary_log ~ GA + plus_mins + TOI + iBLK
-                + Yrs_in_NHL + GP + Grit + iHF + Ovrl, data = def)
+                + Yrs_in_NHL + GP + iHF + Ovrl, data = scale_def)
 summary(base_def2)
-mean(vif(base_def2)) # 18.6
+mean(vif(base_def2)) # 9.4
 autoplot(base_def2)
 
-# Ovechkin Stats
-# Retrieved manually but possibly code here
-
 # Scaled models
-scale_numeric <- function(x) x %>% mutate_if(is.numeric, function(y) as.vector(scale(y)))
-scaled_data <- data %>% scale_numeric()
-
 # bedrock model, non-logged
 bedrock_no_log <- lm(Salary ~ FO_pct + G + A + GF + GA 
                     + plus_mins + TOI + iSF + Yrs_in_NHL 
@@ -132,10 +134,10 @@ summary(bedrock_no_log)
 autoplot(bedrock_no_log)
 
 
-# bedrock model, minus Grit
+# bedrock model
 bedrock <- lm(Salary_log ~ FO_pct + G + A + GF + GA 
               + plus_mins + TOI + iSF + Yrs_in_NHL 
-              + Ht + Wt + iHF + iHA 
+              + Ht + Wt + Grit + iHF + iHA 
               + iBLK + PIM + GP, data = scaled_data)
 summary(bedrock)
 vif(bedrock)
@@ -145,3 +147,16 @@ s <- summary(bedrock)$coefficients[,c(1,3,4)]
 print(xtable(cbind(s, VIF = vif(bedrock))),
       floating=FALSE,latex.environments=NULL,booktabs=TRUE)
 
+# benchmark model
+benchmark <- lm(Salary_log ~ G + A + GF + plus_mins + TOI + iSF + Yrs_in_NHL
+                + Wt + GP, data = scaled_data)
+summary(benchmark)
+mean(vif(benchmark))
+s <- summary(benchmark)$coefficients[,c(1,3,4)]
+print(xtable(cbind(s, VIF = vif(benchmark))),
+      floating=FALSE,latex.environments=NULL,booktabs=TRUE)
+
+
+# Added Variable Plots
+# might be worth investigating outliers
+avPlots(benchmark)
