@@ -7,6 +7,7 @@ library(gratia)
 library(kableExtra)
 library(knitr)
 library(mgcv)
+library(patchwork)
 
 raw_data <- read.csv("combined.csv", header = TRUE)
 
@@ -16,51 +17,37 @@ data <- raw_data[raw_data$Yrs_in_NHL > 3 & raw_data$Is_Offense == 1, ]
 scale_numeric <- function(x) x %>% mutate_if(is.numeric, function(y) as.vector(scale(y)))
 scaled_data <- data %>% scale_numeric()
 
-# consider smoothing
-# thinplate regression spline
-model_gam <- gam(Salary_log ~ s(G) + s(A) + s(GF) + s(plus_mins) + s(TOI) 
+# Initial GAM model
+model_initial <- gam(Salary_log ~ s(G) + s(A) + s(GF) + s(plus_mins) + s(TOI) 
                  + s(iSF) + s(Yrs_in_NHL) + s(Wt) + s(GP), 
-                 data = scaled_data)
-summary(model_gam)
-par(mfrow = c(3, 3))
-plot(model_gam, resid = T, shade = T)
+                 data = scaled_data, method = "REML")
+summary(model_initial)
 
-par(mfrow = c(2, 2))
+p1 <- draw(model_initial, residuals = T, select = smooths(model_initial)[4])
+p2 <- draw(model_initial, residuals = T, select = smooths(model_initial)[7])
+p3 <- draw(model_initial, residuals = T, select = smooths(model_initial)[8])
+list(p1, p2, p3) |>
+  wrap_plots() +
+  plot_layout(nrow = 1, ncol = 3)
+
+# Model diagnostics
+appraise(model_gam, point_col = 'darkblue', point_alpha = 0.4,
+         line_col = "black") & theme_minimal()
 gam.check(model_gam)
-concurvity(model_gam)
 
-
-# Keep iSF and GP parametric
-model_gam_2 <- gam(Salary_log ~ s(G) + s(A) + s(GF) + s(plus_mins) + s(TOI) 
-                 + iSF + s(Yrs_in_NHL) + s(Wt) + GP, 
-                 data = scaled_data)
+# Only smooth TOI, Yrs_in_NHL
+# drop Jaromir Jágr 
+new_data <- scaled_data[scaled_data$Yrs_in_NHL < max(scaled_data$Yrs_in_NHL),]
+model_gam_2 <- gam(Salary_log ~ G + A + GF + plus_mins + s(TOI) 
+                 + iSF + s(Yrs_in_NHL) + Wt + GP, 
+                 data = new_data, method = "REML")
 summary(model_gam_2)
-par(mfrow = c(3, 3))
-plot(model_gam_2, resid = T, shade = T)
-
-par(mfrow = c(2, 2))
+draw(model_gam_2, residuals = T)
 gam.check(model_gam_2)
 
-# Comparison of smoothing
-# really just comparing the same smoothers
-# but leveraging the visualization
-comp <- compare_smooths(model_gam, model_gam_2)
-draw(comp)
+# Model diagnostics
+appraise(model_gam_2, point_col = 'darkblue', point_alpha = 0.4,
+         line_col = "black") & theme_minimal()
 
 
-# compare to cubic regression spline
-model_gam_cub <- gam(Salary_log ~ s(G, bs="cr") + s(A, bs="cr") + s(GF, bs="cr") 
-                     + s(plus_mins, bs="cr") + s(TOI, bs="cr") 
-                      + s(iSF, bs="cr") + s(Yrs_in_NHL, bs="cr") + s(Wt, bs="cr") 
-                     + s(GP, bs="cr"), data = scaled_data)
-summary(model_gam_cub)
-par(mfrow = c(3, 3))
-plot(model_gam, resid = T, shade = T)
 
-par(mfrow = c(2, 2))
-gam.check(model_gam_cub)
-
-concurvity(model_gam_cub)
-
-comp <- compare_smooths(model_gam, model_gam_cub)
-draw(comp)
