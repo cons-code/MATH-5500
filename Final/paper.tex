@@ -14,7 +14,6 @@
 \usepackage{xurl}
 \usepackage{xcolor}
 \usepackage{caption}
-%\usepackage{multicols}
 
 \graphicspath{ {./Images/} }
 \newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
@@ -66,7 +65,7 @@ Corsi Against & 776.9 & 4.0 & 1678.0\\
 Corsi For & 844.8 & 6.0 & 1983.0\\
 Fenwick Against & 579.4 & 4.0 & 1264.0\\
 Fenwick For & 629.8 & 5.0 & 1462.0\\
-Faceoff Pct & 41.2 & 0.0 & 100.0\\
+Faceoff Win Pct. & 41.2 & 0.0 & 100.0\\
 Goals & 11.5 & 0.0 & 44.0\\
 Goals Against & 36.0 & 0.0 & 91.0\\
 Goals For & 40.7 & 0.0 & 120.0\\
@@ -78,13 +77,13 @@ Hits Taken & 62.1 & 0.0 & 186.0\\
 Hits Dished & 67.5 & 0.0 & 300.0\\
 Shots & 105.0 & 0.0 & 313.0\\
 PDO & 992.2 & 500.0 & 1257.0\\
-Penalties in min. & 28.5 & 0.0 & 133.0\\
+Penalties in Min. & 28.5 & 0.0 & 133.0\\
 Plus-Minus & -0.8 & -34.0 & 34.0\\
 Salary & 2.9 & 0.6 & 14.0\\
 Time on Ice & 52732.2 & 528.0 & 105263.0\\
 Weight & 200.6 & 157.0 & 244.0\\
-xGA & 36.9 & 0.2 & 90.5\\
-xGF & 41.5 & 0.1 & 111.1\\
+xG Against & 36.9 & 0.2 & 90.5\\
+xG For & 41.5 & 0.1 & 111.1\\
 Years in NHL & 8.7 & 4.0 & 26.0\\
 \bottomrule
 \end{tabular}
@@ -93,7 +92,7 @@ Years in NHL & 8.7 & 4.0 & 26.0\\
 
 \section{Methods}
 \subsection{Benchmark}
-Our first objective is to construct a simple “baseline” model that can serve as a benchmark for alternative models. Fifteen features are carefully chosen along three dimensions we believe should be well-compensated: offensive production, defensive contribution, and overall physicality. The relationships between these covariates and the outcome of interest is explored. Pair plots exhibit positive, reasonably linear relationships between salary and the offensive covariates—Goals, Assists, Shots, Goals For, Goals Against and Plus Minus. Defensive covariates—Goals Against, Blocks, and Grit—show little to no relationship; while Years in the NHL, Height, Weight, Games Played and Time on Ice sit somewhere in the middle. Preliminary model fits demonstrate clear heteroscedasticity of residuals, along with non-normality characterized by heavy tails. Log transformation is applied to correct for this.
+Our first objective is to construct a simple “baseline” model that can serve as a benchmark for alternative models. Fifteen features are carefully chosen along three dimensions we believe should be well-compensated: offensive production, defensive contribution, and overall physicality. The relationships between these covariates and the outcome of interest is explored. Pair plots exhibit positive, reasonably linear relationships between salary and the offensive covariates—Goals, Assists, Shots, Goals For, and Plus-Minus. Defensive covariates—Goals Against, Blocks, Hits, and Grit—show little to no relationship; while Years in the NHL, Height, Weight, Games Played and Time on Ice sit somewhere in the middle. Preliminary model fits demonstrate clear heteroscedasticity of residuals, along with non-normality characterized by heavy tails. Log transformation is applied to correct for this.
 Multiple linear regression is fit, and residual diagnostics are performed. Variance Inflation Factors are estimated to formally evaluate multicollinearity. Finally, penalized methods are explored to perform model selection, as well as resolve multicollinearity. 
 
 \subsection{Advanced Hockey Statistics}
@@ -109,10 +108,10 @@ Since the benchmark model did not consider any nonlinear approaches, we finally 
 \section{Results}
 \subsection{Benchmark}
 The initial OLS model %(\autoref{tab:initial} in \autoref{a:supplemental}) 
-exhibits a strong degree of predictive power, with an adjusted coefficient of determination of 0.693. In residual analysis (\autoref{benchmark-residuals}), we observe a good degree of random scatter, with no trend in LOWESS that might suggest non-linearity in the regression function. Heteroskedasticity remains an issue, even with log transformation. There are no outliers. The QQ plot (\autoref{benchmark-qq}) exhibits normality, the result of an effective log transformation. Of the original fifteen covariates, the model shows strong evidence suggesting a linear relationship between Salary and only three—Time on Ice, Years in the NHL and Games Played. NHL career seems the most intuitive—for every year spent in the league, we observe a statistically significant increase in Salary by a factor of 1.06, or 6\%, on average, all else held equal. 
+exhibits a strong degree of predictive power, with an adjusted coefficient of determination of 0.693. In residual analysis (\autoref{benchmark-residuals}), we observe a good degree of random scatter, with no trend in LOWESS that might suggest non-linearity in the regression function. Heteroscedasticity remains an issue, even with log transformation. There are no outliers. The QQ plot (\autoref{benchmark-qq}) exhibits normality, the result of an effective log transformation. Of the original fifteen covariates, the model shows strong evidence suggesting a linear relationship between Salary and only three—Time on Ice, Years in the NHL and Games Played. NHL career seems the most intuitive—for every year spent in the league, we observe a statistically significant increase in Salary by a factor of 1.06, or 6\%, on average, all else held equal. 
  In other words, there is a nice baseline “raise” for every year spent in the NHL. Beyond this, there are multiple signs of instability, of which many are recognized as informal signs of multicollinearity. In sensitivity analysis, many coefficients show large variation in both sign and magnitude—for example, when Goals is removed and the model re-fit, Assists flips to a positive factor, with Goals For cut in half. Strong, positive pairwise correlation is observed within the design matrix.
 With a mean VIF = 14.91, there is strong evidence confirming influential collinearity in the predictors of interest; however, as we can observe in the individual VIF scores, multicollinearity is not consistently distributed among each covariates. Instead, correlation falls within stronger and weaker pockets of covariates, directly observable in the pairwise correlation plot—a stronger pocket emerges around offensive features, a slightly weaker among the defensive, and a little couplet around height and weight. Provided we have a high number of predictors, varying levels of importance and pockets of high correlation, we believe an elastic net is best-suited for penalized regression.
-Elastic net is performed (\autoref{tab:benchmark}), showing a reasonably stable shrinkage. The lambda values are quite small, pointing to model selection as the best use case—we induce bias, but don’t observe any meaningful drop in the variance tradeoff. Iterating through different levels of $\alpha$, we settle on the traditional value at $\alpha = 0.5$, with the $\lambda$ chosen within the first standard error; introducing the $L_2$ norm to enforce a “Grouping effect,” while leaning more heavily towards sparsity. Altogether, the model performs well along these expectations, preserving the group of offensive covariates, and shrinking out the unimportant group of defensive features, as we had expected might be the case. 
+Elastic net is performed (\autoref{tab:benchmark}), showing a reasonably stable shrinkage. The lambda values are quite small, pointing to model selection as the best use case—we induce bias, but don’t observe any meaningful drop in the variance tradeoff. Iterating through different levels of $\alpha$, we settle on the traditional value at $\alpha = 0.5$, with the $\lambda$ chosen within the first standard error; introducing the $L_2$ norm to enforce a “grouping effect,” while leaning more heavily towards sparsity. Altogether, the model performs well along these expectations, preserving the group of offensive covariates, and shrinking out the unimportant group of defensive features, as we had expected might be the case. 
 Comparing the shrinkage effect to the original OLS model (\autoref{tab:initial}), we observe correction in sign and magnitude that is perhaps more reasonable for interpretation. Assists are strongly corrected in the positive direction, and share similar impact to goals for—for every assist registered, we observe an increase in salary by a factor of about 1.1\%. This suggests that salary may be well-aligned with offensive production. Games played shrinks much closer to a neutral effect but remains negative. 
 
 \begin{table}[ht]
@@ -294,86 +293,6 @@ Yrs\_in\_NHL & Years in NHL (2016 - DftYr) \\
   \end{threeparttable}    
 \end{table}
 
-%\begin{table}[tph]
-%\caption{\label{tab:advanced}Advanced Metrics Initial Model}
-%\centering
-%\begin{threeparttable}
-%\begin{tabular}[t]{lrrrrr}
-%  \toprule
-%  & Estimate & Std. Error & t value & Pr($>$$|$t$|$) & 95\% CI \\
-%      \hline
-%    (Intercept) & 0.2844 & 0.0682 & 4.17 & $<$0.0001 & (0.1503, 0.4184) \\ 
-%    A & 0.0903 & 0.0871 & 1.04 & 0.3004 & (-0.0809, 0.2616) \\ 
-%    GF & 0.0835 & 0.2150 & 0.39 & 0.6978 & (-0.3392, 0.5063) \\ 
-%    Plus-Minus & -0.1309 & 0.0495 & -2.65 & 0.0085 & (-0.2282, -0.0336) \\ 
-%    TOI & 1.0859 & 0.3806 & 2.85 & 0.0046 & (0.3375, 1.8343) \\ 
-%    iSF & 0.1505 & 0.0800 & 1.88 & 0.0608 & (-0.0068, 0.3077) \\ 
-%    Yrs\_in\_NHL & 0.2537 & 0.0293 & 8.65 & <0.0001 & (0.1960, 0.3114) \\ 
-%    Wt & 0.0927 & 0.0292 & 3.17 & 0.0016 & (0.0352, 0.1501) \\ 
-%    GP & -1.2380 & 0.1479 & -8.37 & <0.0001 & (-1.5289, -0.9470) \\ 
-%    PDO & 0.2387 & 0.1320 & 1.81 & 0.0714 & (-0.0209, 0.4983) \\ 
-%    CA & 1.2701 & 0.5870 & 2.16 & 0.0311 & (0.1157, 2.4244) \\ 
-%    CF & 0.6446 & 0.7586 & 0.85 & 0.3961 & (-0.8473, 2.1364) \\
-%    FA & -1.0774 & 0.6302 & -1.71 & 0.0882 & (-2.3167, 0.1619) \\ 
-%    FF & 0.2472 & 0.8590 & 0.29 & 0.7737 & (-1.4420, 1.9363) \\ 
-%    xGA & -0.1335 & 0.2415 & -0.55 & 0.5807 & (-0.6084, 0.3414) \\ 
-%    xGF & -0.6520 & 0.3075 & -2.12 & 0.0347 & (-1.2568, -0.0472) \\ 
-%    CA:CF & -0.1448 & 0.4847 & -0.30 & 0.7653 & (-1.0980, 0.8084) \\ 
-%    FA:FF & 0.6112 & 0.5099 & 1.20 & 0.2314 & (-0.3915, 1.6139) \\ 
-%    CA:FA & -0.5539 & 0.1634 & -3.39 & 0.0008 & (-0.8752, -0.23262936) \\ 
-%    CF:FF & -0.4170 & 0.1468 & -2.84 & 0.0047 & (-0.7056, -0.1284) \\ 
-%    xGA:xGF & 0.2437 & 0.1832 & 1.33 & 0.1842 & (-0.1165, 0.6038) \\ 
-%    PDO:xGA & 0.0339 & 0.1366 & 0.25 & 0.8040 & (-0.2346, 0.3025) \\ 
-%    PDO:xGF & 0.1089 & 0.1537 & 0.71 & 0.4789 & (-0.1932, 0.4111) \\ 
-%   \bottomrule
-%\end{tabular}
-%    \begin{tablenotes}
-%      \item $R^2_a$ = 0.7161, $df$ = 359, $se$ = 0.5328
-%    \end{tablenotes}
-%  \end{threeparttable}    
-%\end{table}
-
-% Remove Std. Error
-%\begin{table}[tph]
-%\caption{\label{tab:advanced}Advanced Statistics Initial Model (Saturated)}
-%\centering
-%\begin{threeparttable}
-%\begin{tabular}[t]{lrrrrr}
-%  \toprule
-%  & Estimate & t value & Pr($>$$|$t$|$) & 95\% CI \\
-%      \midrule
-%    (Intercept) & 0.2844 & 4.17 & $<$0.0001 & (0.1503, 0.4184) \\ 
-%    A & 0.0903 & 1.04 & 0.3004 & (-0.0809, 0.2616) \\ 
-%    GF & 0.0835  & 0.39 & 0.6978 & (-0.3392, 0.5063) \\ 
-%    Plus-Minus & -0.1309 & -2.65 & 0.0085 & (-0.2282, -0.0336) \\ 
-%    TOI & 1.0859 & 2.85 & 0.0046 & (0.3375, 1.8343) \\ 
-%    iSF & 0.1505 & 1.88 & 0.0608 & (-0.0068, 0.3077) \\ 
-%    Yrs\_in\_NHL & 0.2537  & 8.65 & <0.0001 & (0.1960, 0.3114) \\ 
-%    Wt & 0.0927 & 3.17 & 0.0016 & (0.0352, 0.1501) \\ 
-%    GP & -1.2380 & -8.37 & <0.0001 & (-1.5289, -0.9470) \\ 
-%    PDO & 0.2387 & 1.81 & 0.0714 & (-0.0209, 0.4983) \\ 
-%    CA & 1.2701 & 2.16 & 0.0311 & (0.1157, 2.4244) \\ 
-%    CF & 0.6446 & 0.85 & 0.3961 & (-0.8473, 2.1364) \\
-%    FA & -1.0774 & -1.71 & 0.0882 & (-2.3167, 0.1619) \\ 
-%    FF & 0.2472 & 0.29 & 0.7737 & (-1.4420, 1.9363) \\ 
-%    xGA & -0.1335 & -0.55 & 0.5807 & (-0.6084, 0.3414) \\ 
-%    xGF & -0.6520 & -2.12 & 0.0347 & (-1.2568, -0.0472) \\ 
-%    CA:CF & -0.1448 & -0.30 & 0.7653 & (-1.0980, 0.8084) \\ 
-%    FA:FF & 0.6112  & 1.20 & 0.2314 & (-0.3915, 1.6139) \\ 
-%    CA:FA & -0.5539 & -3.39 & 0.0008 & (-0.8752, -0.2326) \\ 
-%    CF:FF & -0.4170 & -2.84 & 0.0047 & (-0.7056, -0.1284) \\ 
-%    xGA:xGF & 0.2437 & 1.33 & 0.1842 & (-0.1165, 0.6038) \\ 
-%    PDO:xGA & 0.0339 & 0.25 & 0.8040 & (-0.2346, 0.3025) \\ 
-%    PDO:xGF & 0.1089 & 0.71 & 0.4789 & (-0.1932, 0.4111) \\ 
-%   \bottomrule
-%\end{tabular}
-%    \begin{tablenotes}
-%      \item $R^2_a$ = 0.72
-%    \end{tablenotes}
-%  \end{threeparttable}    
-%\end{table}
-
-% Remove CI
 \begin{table}[tph]
 \caption{Advanced Statisics Initial Model}
 \label{tab:advanced}
@@ -573,41 +492,6 @@ B. smooth terms & edf & Ref.df & F-value & p-value \\
   \end{threeparttable}    
 \end{table}
 
-%\begin{table}
-%\centering
-%\caption{Basis Dimension Check, Initial GAM} 
-%\label{tab.basis.check.initial}
-%\begin{tabular}[t]{lrrrr}
-%\hline
-%& k\textquotesingle & edf & k-index & p-value\\
-%\hline
-%s(G) & 9.00 & 1.00 & 1.00 & 0.490\\
-%s(A) & 9.00 & 1.00 & 1.09 & 0.965\\
-%s(GF) & 9.00 & 1.00 & 0.97 & 0.260\\
-%s(plus\_mins) & 9.00 & 1.15 & 0.93 & 0.045\\
-%s(TOI) & 9.00 & 3.85 & 0.99 &  0.420\\
-%s(iSF) & 9.00 & 1.00 & 1.02 & 0.615\\
-%s(Yrs\_in\_NHL) & 9.00 & 3.29 & 0.98 & 0.310\\
-%s(Wt) & 9.00 & 2.03 & 1.04 & 0.760\\
-%s(GP) & 9.00 & 1.00 & 0.96 & 0.195\\
-%\hline
-%\end{tabular}
-%\end{table}
-
-
-%\begin{table}
-%\centering
-%\caption{Basis Dimension Check, Revised GAM} 
-%\label{tab.basis.check.revised}
-%\begin{tabular}[t]{lrrrr}
-%\hline
-%& k\textquotesingle & edf & k-index & p-value\\
-%\hline
-%s(TOI) & 9.00 & 3.80 & 0.99 &  0.420\\
-%s(Yrs\_in\_NHL) & 9.00 & 3.01 & 0.97 & 0.280\\
-%\hline
-%\end{tabular}
-%\end{table}
 \vfill\break
 \section{Supplemental Figures}
 \label{a:supplemental-fig}
